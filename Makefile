@@ -20,5 +20,6 @@ uninstall:
 	rm -f ${OBJS:%=${DESTDIR}${BINDIR}/%}
 
 clean:
-	rm -f httpbuild ${OBJS}
+	rm -rf httpbuild
+	rm -f  ${OBJS}
 
