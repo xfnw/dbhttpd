@@ -5,6 +5,12 @@
 #define HTTPSERVER_IMPL
 #include "httpbuild/src/httpserver.h"
 
+#define STRIP_LEADING(in) \
+	if (*(char *)(in.data) == '/') { \
+		in.data += 1; \
+		in.size -= 1; \
+	}
+
 DB *db;
 time_t last_sync = 0;
 
@@ -37,6 +43,7 @@ void handle_get(struct http_request_s *req, struct http_response_s *res) {
 	http_string_t target = http_request_target(req);
 	key.data = (char *)target.buf;
 	key.size = target.len;
+	STRIP_LEADING(key);
 
 	if (db->get(db, &key, &value, 0) == 0) {
 		http_response_status(res, 200);
@@ -56,6 +63,7 @@ void handle_put(struct http_request_s *req, struct http_response_s *res) {
 	http_string_t target = http_request_target(req);
 	key.data = (char *)target.buf;
 	key.size = target.len;
+	STRIP_LEADING(key);
 
 	http_string_t body = http_request_body(req);
 	value.data = (char *)body.buf;
