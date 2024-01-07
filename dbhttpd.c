@@ -1,4 +1,5 @@
 #include <db_185.h>
+#include <stdlib.h>
 #include <time.h>
 
 #define HTTPSERVER_IMPL
@@ -16,6 +17,17 @@ int do_sync() {
 	db->sync(db, 0);
 
 	return 1;
+}
+
+void handle_signal(int sig) {
+	if (sig == SIGHUP) {
+		printf("got sighup, syncing...\n");
+		db->sync(db, 0);
+		return;
+	}
+
+	db->close(db);
+	exit(0);
 }
 
 void handle_get(struct http_request_s *req, struct http_response_s *res) {
@@ -97,5 +109,13 @@ int main(int argc, char *argv[]) {
 		return 3;
 	}
 	struct http_server_s *srv = http_server_init(port, handle_request);
+
+	struct sigaction act;
+	act.sa_handler = handle_signal;
+
+	sigaction(SIGHUP, &act, 0);
+	sigaction(SIGINT, &act, 0);
+	sigaction(SIGTERM, &act, 0);
+
 	http_server_listen(srv);
 }
