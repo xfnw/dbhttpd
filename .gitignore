@@ -1,4 +1,5 @@
 dbhttpd
 httpbuild
+tags
 *.db
 *.o
