@@ -1,6 +1,7 @@
-CFLAGS ?= -g -DEPOLL
-PREFIX ?= /usr/local
-BINDIR ?= ${PREFIX}/bin
+CFLAGS  ?= -O3 -DEPOLL
+LDFLAGS ?= -ldb
+PREFIX  ?= /usr/local
+BINDIR  ?= ${PREFIX}/bin
 
 OBJS += dbhttpd
 
