@@ -77,7 +77,11 @@ void handle_put(struct http_request_s *req, struct http_response_s *res) {
 	value.data = (char *)body.buf;
 	value.size = body.len + 1;
 
-	if (db->put(db, &key, &value, 0) == 0) {
+	if (body.len == 0) {
+		db->del(db, &key, 0);
+		http_response_status(res, 200);
+		http_response_body(res, "deweted\n", 8);
+	} else if (db->put(db, &key, &value, 0) == 0) {
 		int sync = do_sync();
 		http_response_status(res, 200);
 		http_response_body(res, "<:3\n" + sync, 4 - sync);
