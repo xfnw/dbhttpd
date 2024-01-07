@@ -100,6 +100,10 @@ int main(int argc, char *argv[]) {
 	if (argc > 1) {
 		db = dbopen(argv[1], O_CREAT | O_RDWR | F_RDLCK, 0644, DB_HASH,
 			    NULL);
+		if (db == NULL) {
+			printf("failed to open db\n");
+			return 4;
+		}
 		if (argc == 3 && (port = atoi(argv[2])) == 0) {
 			printf("what port\n");
 			return 2;
@@ -108,6 +112,7 @@ int main(int argc, char *argv[]) {
 		printf("usage: %s file [port]\n", *argv);
 		return 3;
 	}
+
 	struct http_server_s *srv = http_server_init(port, handle_request);
 
 	struct sigaction act;
