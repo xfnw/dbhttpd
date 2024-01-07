@@ -37,6 +37,7 @@ void handle_signal(int sig) {
 }
 
 void handle_get(struct http_request_s *req, struct http_response_s *res) {
+	char *content_type = "text/plain";
 	DBT key;
 	DBT value;
 
@@ -48,11 +49,18 @@ void handle_get(struct http_request_s *req, struct http_response_s *res) {
 	if (db->get(db, &key, &value, 0) == 0) {
 		http_response_status(res, 200);
 		http_response_body(res, value.data, value.size - 1);
+		if (value.size > 3 && *(char *)value.data == '<') {
+			switch (((char *)value.data)[1]) {
+			case '?': content_type = "text/xml"; break;
+			case '!': content_type = "text/html"; break;
+			}
+		}
 	} else {
 		http_response_status(res, 404);
 		http_response_body(res, "404 nyot f-f-found\n", 19);
 	}
 
+	http_response_header(res, "Content-Type", content_type);
 	http_respond(req, res);
 }
 
@@ -78,13 +86,13 @@ void handle_put(struct http_request_s *req, struct http_response_s *res) {
 		http_response_body(res, "500 s-s-s-something went wwong\n", 31);
 	}
 
+	http_response_header(res, "Content-Type", "text/plain");
 	http_respond(req, res);
 }
 
 void handle_request(struct http_request_s *req) {
 	http_string_t method = http_request_method(req);
 	struct http_response_s *res = http_response_init();
-	http_response_header(res, "Content-Type", "text/plain");
 
 	/* be naughty and dont check the entire method name,
 	 * GET and PUT are the only 3-char methods starting
@@ -98,6 +106,7 @@ void handle_request(struct http_request_s *req) {
 	}
 
 err:
+	http_response_header(res, "Content-Type", "text/plain");
 	http_response_status(res, 405);
 	http_response_body(res, "405 owo whats this?\n", 20);
 	http_respond(req, res);
