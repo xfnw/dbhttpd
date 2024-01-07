@@ -1,9 +1,22 @@
 #include <db_185.h>
+#include <time.h>
 
 #define HTTPSERVER_IMPL
 #include "httpbuild/src/httpserver.h"
 
 DB *db;
+time_t last_sync = 0;
+
+int do_sync() {
+	time_t new_time = time(NULL);
+	if (new_time - 20 < last_sync)
+		return 0;
+
+	last_sync = new_time;
+	db->sync(db, 0);
+
+	return 1;
+}
 
 void handle_get(struct http_request_s *req, struct http_response_s *res) {
 	DBT key;
@@ -24,7 +37,29 @@ void handle_get(struct http_request_s *req, struct http_response_s *res) {
 	http_respond(req, res);
 }
 
-void handle_put(struct http_request_s *req, struct http_response_s *res) {}
+void handle_put(struct http_request_s *req, struct http_response_s *res) {
+	DBT key;
+	DBT value;
+
+	http_string_t target = http_request_target(req);
+	key.data = (char *)target.buf;
+	key.size = target.len;
+
+	http_string_t body = http_request_body(req);
+	value.data = (char *)body.buf;
+	value.size = body.len + 1;
+
+	if (db->put(db, &key, &value, 0) == 0) {
+		int sync = do_sync();
+		http_response_status(res, 200);
+		http_response_body(res, "<:3\n" + sync, 4 - sync);
+	} else {
+		http_response_status(res, 500);
+		http_response_body(res, "500 s-s-s-something went wwong\n", 31);
+	}
+
+	http_respond(req, res);
+}
 
 void handle_request(struct http_request_s *req) {
 	http_string_t method = http_request_method(req);
