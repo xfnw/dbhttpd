@@ -137,6 +137,7 @@ int main(int argc, char *argv[]) {
 	struct http_server_s *srv = http_server_init(port, handle_request);
 
 	struct sigaction act;
+	memset(&act, 0, sizeof act);
 	act.sa_handler = handle_signal;
 
 	sigaction(SIGHUP, &act, 0);
