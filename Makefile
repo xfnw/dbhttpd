@@ -1,4 +1,4 @@
-CFLAGS ?= -O3 -DEPOLL
+CFLAGS ?= -g -DEPOLL
 PREFIX ?= /usr/local
 BINDIR ?= ${PREFIX}/bin
 
