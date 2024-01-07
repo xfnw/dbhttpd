@@ -3,15 +3,31 @@
 #define HTTPSERVER_IMPL
 #include "httpbuild/src/httpserver.h"
 
-void *db;
+DB *db;
 
-void handle_get(struct http_request_s *req, struct http_response_s *res) {}
+void handle_get(struct http_request_s *req, struct http_response_s *res) {
+	DBT key;
+	DBT value;
+
+	http_string_t target = http_request_target(req);
+	key.data = (char *)target.buf;
+	key.size = target.len;
+
+	if (db->get(db, &key, &value, 0) == 0) {
+		http_response_status(res, 200);
+		http_response_body(res, value.data, value.size - 1);
+	} else {
+		http_response_status(res, 404);
+		http_response_body(res, "404 nyot f-f-found\n", 19);
+	}
+
+	http_respond(req, res);
+}
 
 void handle_put(struct http_request_s *req, struct http_response_s *res) {}
 
 void handle_request(struct http_request_s *req) {
 	http_string_t method = http_request_method(req);
-	http_string_t target = http_request_target(req);
 	struct http_response_s *res = http_response_init();
 	http_response_header(res, "Content-Type", "text/plain");
 
@@ -35,7 +51,8 @@ err:
 int main(int argc, char *argv[]) {
 	int port = 8030;
 	if (argc > 1) {
-		db = dbopen(argv[1], O_CREAT|O_RDWR|F_RDLCK, 0644, DB_HASH, NULL);
+		db = dbopen(argv[1], O_CREAT | O_RDWR | F_RDLCK, 0644, DB_HASH,
+			    NULL);
 		if (argc == 3 && (port = atoi(argv[2])) == 0) {
 			printf("what port\n");
 			return 2;
