@@ -4,14 +4,13 @@ BINDIR ?= ${PREFIX}/bin
 
 OBJS += dbhttpd
 
-all: httpserver.h ${OBJS}
+all: httpbuild ${OBJS}
 
-.PHONY: httpserver.h
-httpserver.h: httpserver.h/src/httpserver.h
-
-httpserver.h/src/httpserver.h:
-	cd httpserver.h && cmake .
-	cd httpserver.h && make httpserver.h
+httpbuild:
+	mkdir httpbuild
+	cp -r httpserver.h/src httpbuild
+	cd httpserver.h && cmake -B ../httpbuild
+	cd httpbuild && make httpserver.h
 
 install: all
 	install ${OBJS} ${DESTDIR}${BINDIR}
@@ -20,5 +19,5 @@ uninstall:
 	rm -f ${OBJS:%=${DESTDIR}${BINDIR}/%}
 
 clean:
-	rm -f ${OBJS}
+	rm -f httpbuild ${OBJS}
 
