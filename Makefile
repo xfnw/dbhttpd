@@ -13,6 +13,9 @@ httpbuild:
 	cd httpserver.h && cmake -B ../httpbuild
 	cd httpbuild && make httpserver.h
 
+%: %.c
+	${CC} ${CFLAGS} -o $@ $< ${LDFLAGS}
+
 install: all
 	install ${OBJS} ${DESTDIR}${BINDIR}
 
