@@ -67,9 +67,7 @@ class DbFS(Operations):
         )
         self.modified.add(path)
 
-        # what is this supposed to do?
-        # borrowed from example, errors out without it...
-        return len(self.cache)
+        return len(buf)
 
     def release(self, path, fh):
         if path in self.modified:
