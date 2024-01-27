@@ -17,7 +17,7 @@ class DbFS(Operations):
             if req.status_code == 404:
                 # dbhttpd does not have a distinction between
                 # empty and nonexistent files
-                self.cache[path] = b''
+                self.cache[path] = b""
             else:
                 self.cache[path] = req.content
 
@@ -45,11 +45,10 @@ class DbFS(Operations):
 
     def truncate(self, path, length, fh=None):
         old = self._getfile(path)
-        self.cache[path] = old[:length].ljust(length, b'\0')
-
+        self.cache[path] = old[:length].ljust(length, b"\0")
 
     def unlink(self, path):
-        requests.put(url=self.prefix + path);
+        requests.put(url=self.prefix + path)
 
         if path in self.modified:
             self.modified.remove(path)
@@ -61,7 +60,11 @@ class DbFS(Operations):
 
     def write(self, path, buf, offset, fh):
         old = self._getfile(path)
-        self.cache[path] = old[:offset].ljust(offset, b'\0') + buf + old[offset + len(buf) :]
+        # FIXME: extremely slow and bad, does several memory
+        # allocations per write. python bytes lacks assignment :(
+        self.cache[path] = (
+            old[:offset].ljust(offset, b"\0") + buf + old[offset + len(buf) :]
+        )
         self.modified.add(path)
 
         # what is this supposed to do?
@@ -77,7 +80,11 @@ class DbFS(Operations):
 
 
 if __name__ == "__main__":
+    if len(sys.argv) < 3:
+        print("usage: %s urlprefix mountpoint" % sys.argv[0])
+        sys.exit(6)
+
     prefix = sys.argv[1]
     mountpoint = sys.argv[2]
 
-    FUSE(DbFS(prefix), mountpoint, nothreads=True, foreground=True)
+    FUSE(DbFS(prefix), mountpoint, nothreads=True)
