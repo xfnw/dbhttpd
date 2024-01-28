@@ -32,7 +32,11 @@ class DbFS(Operations):
             size = 0
         else:
             m = S_IFREG
-            size = len(self._getfile(path))
+            req = requests.head(prefix + path)
+            if req.status_code == 404:
+                size = 0
+            else:
+                size = int(req.headers["Content-Length"])
 
         return dict(
             st_mode=m | 0o777,
