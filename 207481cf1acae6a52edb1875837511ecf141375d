@@ -1,0 +1,3 @@
+it seems the real issue is that httpserver.h silently ignores
+requests lacking headers, and most requests with keep-alive do
+not have additional headers to send for subsequent requests
