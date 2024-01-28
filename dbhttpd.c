@@ -1,4 +1,5 @@
 #include <db_185.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -36,7 +37,8 @@ void handle_signal(int sig) {
 	exit(0);
 }
 
-void handle_get(struct http_request_s *req, struct http_response_s *res) {
+void handle_get_head(struct http_request_s *req, struct http_response_s *res,
+		     bool send_body) {
 	char *content_type = "text/plain";
 	DBT key;
 	DBT value;
@@ -47,8 +49,15 @@ void handle_get(struct http_request_s *req, struct http_response_s *res) {
 	STRIP_LEADING(key);
 
 	if (db->get(db, &key, &value, 0) == 0) {
+		/* we can safely pass a NULL body to
+		 * httpserver.h, it will omit the body
+		 * but still send Content-Length */
+		char *body = NULL;
+		if (send_body)
+			body = value.data;
+
 		http_response_status(res, 200);
-		http_response_body(res, value.data, value.size - 1);
+		http_response_body(res, body, value.size - 1);
 		if (value.size > 3 && *(char *)value.data == '<') {
 			switch (((char *)value.data)[1]) {
 			case '?': content_type = "text/xml"; break;
@@ -103,16 +112,17 @@ void handle_request(struct http_request_s *req) {
 
 	/* be naughty and dont check the entire method name,
 	 * GET and PUT are the only 3-char methods starting
-	 * with G or P */
-	if (method.len != 3)
-		goto err;
+	 * with G or P. same for 4-char HEAD with H */
+	if (method.len == 3)
+		switch (*method.buf) {
+		case 'G': return handle_get_head(req, res, 1);
+		case 'P': return handle_put(req, res);
+		}
+	else if (method.len == 4)
+		switch (*method.buf) {
+		case 'H': return handle_get_head(req, res, 0);
+		}
 
-	switch (*method.buf) {
-	case 'G': return handle_get(req, res);
-	case 'P': return handle_put(req, res);
-	}
-
-err:
 	http_response_header(res, "Content-Type", "text/plain");
 	http_response_status(res, 405);
 	http_response_body(res, "405 owo whats this?\n", 20);
