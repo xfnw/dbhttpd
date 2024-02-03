@@ -5,13 +5,15 @@ BINDIR  ?= ${PREFIX}/bin
 
 OBJS += dbhttpd
 
-all: httpbuild ${OBJS}
+all: ${OBJS}
 
-httpbuild:
-	mkdir httpbuild
+httpbuild/src/httpserver.h:
+	mkdir -p httpbuild
 	cp -r httpserver.h/src httpbuild
 	cd httpserver.h && cmake -B ../httpbuild
 	cd httpbuild && make httpserver.h
+
+dbhttpd: httpbuild/src/httpserver.h
 
 %: %.c
 	${CC} ${CFLAGS} -o $@ $< ${LDFLAGS}
