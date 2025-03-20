@@ -58,10 +58,27 @@ void handle_get_head(struct http_request_s *req, struct http_response_s *res,
 
 		http_response_status(res, 200);
 		http_response_body(res, body, value.size - 1);
-		if (value.size > 3 && *(char *)value.data == '<') {
-			switch (((char *)value.data)[1]) {
-			case '?': content_type = "text/xml"; break;
-			case '!': content_type = "text/html"; break;
+		if (value.size > 3) {
+			switch (*(char *)value.data) {
+			case '{': content_type = "application/json"; break;
+			case '/':
+				switch (((char *)value.data)[1]) {
+				case '*': content_type = "text/css"; break;
+				case '/':
+					content_type = "text/javascript";
+					break;
+				}
+				break;
+			case '<':
+				switch (((char *)value.data)[1]) {
+				case '?': content_type = "text/xml"; break;
+				case '!': content_type = "text/html"; break;
+				}
+				break;
+			case '\0':
+				if (((char *)value.data)[1] == 'a')
+					content_type = "application/wasm";
+				break;
 			}
 		}
 	} else {
